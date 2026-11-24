@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sift · explore a CSV with pandas, in your browser</title>
+    <meta
+      name="description"
+      content="Open a CSV and see every column described, then ask questions in pandas. Python runs on the page, so your data never leaves your device."
+    />
+    <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111315" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to the content</a>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Sift</span>
+      </div>
+      <div class="top-actions">
+        <p class="engine" id="engine" role="status" aria-live="polite">
+          <span class="engine-dot" aria-hidden="true"></span><span id="engine-text">Starting Python…</span>
+        </p>
+        <button type="button" class="btn" id="open-another" hidden>
+          <span data-icon="folder"></span><span class="btn-label">Open file</span>
+        </button>
+        <button type="button" class="btn btn-icon" id="theme" aria-label="Switch to dark theme"></button>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="start" id="start" aria-labelledby="start-title">
+        <div class="start-copy">
+          <h1 id="start-title">Explore a CSV with pandas, right here in your browser.</h1>
+          <p class="lede">
+            Sift describes every column, then answers your questions in real pandas code. Python runs on this page, so
+            your file is never uploaded anywhere.
+          </p>
+        </div>
+
+        <div class="drop" id="drop">
+          <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" class="sr-only" />
+          <span class="drop-icon" data-icon="upload" aria-hidden="true"></span>
+          <p class="drop-title"><label for="file" class="link-like">Choose a CSV file</label> or drop it here</p>
+          <p class="drop-hint">Comma, semicolon, tab or pipe separated · UTF-8 or Windows-1252 · up to 100 MB</p>
+          <div class="drop-actions">
+            <button type="button" class="btn" id="paste-toggle" aria-expanded="false" aria-controls="paste-panel">
+              <span data-icon="clipboard"></span><span class="btn-label">Paste data</span>
+            </button>
+          </div>
+          <div class="paste" id="paste-panel" hidden>
+            <label for="paste" class="field-label">Paste rows with a header line, for example copied from a spreadsheet</label>
+            <textarea id="paste" class="mono" rows="7" spellcheck="false" placeholder="name,amount&#10;Rent,950&#10;Groceries,312.40"></textarea>
+            <button type="button" class="btn btn-primary" id="paste-open">Open pasted data</button>
+          </div>
+        </div>
+
+        <div class="samples">
+          <h2 class="eyebrow">Or try an example</h2>
+          <div class="sample-list" id="samples"></div>
+        </div>
+
+        <ol class="boot" id="boot" aria-label="Python start-up">
+          <li data-stage="runtime"><span class="boot-mark" aria-hidden="true"></span>Python 3.14 (Pyodide)</li>
+          <li data-stage="packages"><span class="boot-mark" aria-hidden="true"></span>pandas and NumPy</li>
+          <li data-stage="ready"><span class="boot-mark" aria-hidden="true"></span>Ready</li>
+        </ol>
+        <p class="error-box" id="start-error" role="alert" hidden></p>
+      </section>
+
+      <section class="workspace" id="workspace" hidden aria-labelledby="file-name">
+        <div class="filebar">
+          <div>
+            <h1 class="file-name" id="file-name"></h1>
+            <p class="file-facts" id="file-facts"></p>
+          </div>
+        </div>
+
+        <div class="panes">
+          <aside class="columns-pane" aria-labelledby="columns-title">
+            <div class="pane-head">
+              <h2 class="pane-title" id="columns-title">Columns</h2>
+              <label class="sr-only" for="column-filter">Find a column</label>
+              <input id="column-filter" class="input input-small" type="search" placeholder="Find a column" autocomplete="off" />
+            </div>
+            <ul class="column-list" id="columns"></ul>
+          </aside>
+
+          <div class="query-pane">
+            <section class="card editor-card" aria-labelledby="query-label">
+              <div class="card-head">
+                <label class="pane-title" id="query-label" for="query">Ask in pandas</label>
+                <span class="hint" id="query-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> runs · <code>df</code> is your file</span>
+              </div>
+              <textarea
+                id="query"
+                class="query mono"
+                rows="4"
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                aria-describedby="query-hint"
+              ></textarea>
+              <div class="editor-actions">
+                <div class="snippets" id="snippets" role="group" aria-label="Example queries"></div>
+                <div class="run-actions">
+                  <button type="button" class="btn" id="stop" hidden><span data-icon="stop"></span><span class="btn-label">Stop</span></button>
+                  <button type="button" class="btn btn-primary" id="run"><span data-icon="play"></span><span class="btn-label">Run</span></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="card result-card" id="result-card" aria-labelledby="result-title">
+              <div class="card-head">
+                <h2 class="pane-title" id="result-title">Result</h2>
+                <div class="result-tools">
+                  <p class="result-meta" id="result-meta" role="status" aria-live="polite"></p>
+                  <button type="button" class="btn btn-small" id="download" hidden>
+                    <span data-icon="download"></span><span class="btn-label">CSV</span>
+                  </button>
+                </div>
+              </div>
+              <pre class="stdout mono" id="stdout" hidden></pre>
+              <div class="error-box" id="error" role="alert" hidden></div>
+              <pre class="text-result mono" id="text-result" hidden></pre>
+              <div class="table-wrap" id="table-wrap" tabindex="0" role="region" aria-labelledby="result-title" hidden>
+                <table class="table" id="table"></table>
+              </div>
+              <p class="empty" id="empty" hidden></p>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Your data stays on this device. Sift is open source (MIT) and runs Python with Pyodide, pandas and NumPy.</p>
+    </footer>
+
+    <div class="drop-overlay" id="drop-overlay" hidden aria-hidden="true"><p>Drop the CSV to open it</p></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

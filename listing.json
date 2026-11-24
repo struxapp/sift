@@ -1,0 +1,5 @@
+{
+  "name": "Sift",
+  "description": "Open a CSV and see every column described, then ask questions in real pandas code. Python runs on the page; nothing is uploaded.",
+  "category": "data-charts"
+}
