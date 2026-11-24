@@ -30,7 +30,7 @@
   --accent-hover: #184c99;
   --on-accent: #ffffff;
   --accent-soft: #e6eefb;
-  --amber: #b26b00;
+  --amber: #955a00;
   --amber-soft: #fbf0dc;
   --bar: #9db8e6;
   --focus: #1f5fbf;
@@ -43,7 +43,7 @@
   --k-number: #1f5fbf;
   --k-date: #7c3aed;
   --k-text: #0f766e;
-  --k-boolean: #b26b00;
+  --k-boolean: #955a00;
 
   --radius: 12px;
   color-scheme: light;
@@ -203,6 +203,11 @@ textarea.mono {
 
 .brand-mark {
   display: inline-flex;
+}
+
+.brand-mark svg {
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .top-actions {
@@ -1059,22 +1064,13 @@ main {
 }
 
 @media (max-width: 560px) {
-  .btn-label {
+  #open-another .btn-label {
     display: none;
   }
 
-  #open-another,
-  #run,
-  #stop,
-  #download {
-    width: auto;
-    padding: 0 10px;
-  }
-
-  #run .btn-label,
-  #stop .btn-label,
-  #download .btn-label {
-    display: inline;
+  #open-another {
+    width: 36px;
+    padding: 0;
   }
 
   .engine {

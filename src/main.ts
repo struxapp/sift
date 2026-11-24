@@ -381,7 +381,7 @@ function renderTable(result: TableResult): void {
   result.rows.forEach((row, r) => {
     const tr = el("tr");
     if (result.index) {
-      const th = el("th", "index-col", result.index[r]);
+      const th = el("th", "index-col", formatDate(result.index[r]));
       th.scope = "row";
       tr.append(th);
     }

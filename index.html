@@ -24,7 +24,7 @@
         <p class="engine" id="engine" role="status" aria-live="polite">
           <span class="engine-dot" aria-hidden="true"></span><span id="engine-text">Starting Python…</span>
         </p>
-        <button type="button" class="btn" id="open-another" hidden>
+        <button type="button" class="btn" id="open-another" aria-label="Open another file" hidden>
           <span data-icon="folder"></span><span class="btn-label">Open file</span>
         </button>
         <button type="button" class="btn btn-icon" id="theme" aria-label="Switch to dark theme"></button>
@@ -98,6 +98,7 @@
               <textarea
                 id="query"
                 class="query mono"
+                wrap="off"
                 rows="4"
                 spellcheck="false"
                 autocomplete="off"
