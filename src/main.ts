@@ -130,10 +130,15 @@ function showStart(): void {
 
 // ---------------------------------------------------------------- Workspace
 
-function showWorkspace(data: Overview): void {
+/** Shows the workspace as it was left: the query and result stay. */
+function enterWorkspace(): void {
   $("start").hidden = true;
   $("workspace").hidden = false;
   $("open-another").hidden = false;
+  $("file-name").focus();
+}
+
+function showWorkspace(data: Overview): void {
   $("file-name").textContent = data.name;
   const columns = plural(data.columns.length, "column");
   $("file-facts").textContent = [
@@ -149,7 +154,7 @@ function showWorkspace(data: Overview): void {
   $<HTMLTextAreaElement>("query").value = "df";
   showResult({...data.preview, stdout: ""}, null);
   if (!data.rows) showNote(`Only a header line found: ${data.name} names ${columns} but has no rows under them.`);
-  $("file-name").focus();
+  enterWorkspace();
 }
 
 function renderSnippets(data: Overview): void {
@@ -297,9 +302,7 @@ function wireStart(): void {
     void openData(new TextEncoder().encode(text), "Pasted data", "paste");
   });
 
-  $("resume").addEventListener("click", () => {
-    if (overview) showWorkspace(overview);
-  });
+  $("resume").addEventListener("click", enterWorkspace);
 }
 
 function wireWorkspace(): void {
