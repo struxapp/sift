@@ -4,6 +4,11 @@
   "private": true,
   "description": "Explore a CSV with pandas, right in your browser. Nothing is uploaded.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iSquare-Lab/sift"
+  },
+  "homepage": "https://github.com/iSquare-Lab/sift",
   "type": "module",
   "engines": {
     "node": ">=22"
