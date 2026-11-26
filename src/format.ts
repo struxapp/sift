@@ -43,16 +43,42 @@ export function delimiterName(delimiter: string): string {
   return {",": "comma", ";": "semicolon", "\t": "tab", "|": "pipe"}[delimiter] ?? JSON.stringify(delimiter);
 }
 
-/** A table cell: numbers formatted when the column is numeric, ISO dates shortened, missing values as a dash. */
-export function formatCell(value: unknown, kind: string): string {
+/** The decimals formatNumber shows for one value. */
+function shownDecimals(value: number): number {
+  const text = formatNumber(value);
+  const dot = text.indexOf(".");
+  return dot < 0 ? 0 : text.length - dot - 1;
+}
+
+/**
+ * One number format for a whole result column, so its values line up with the same decimals (2,476.90 next to
+ * 4,400.00) instead of each dropping its own trailing zeros.
+ */
+export function columnNumberFormat(values: readonly unknown[]): (value: number) => string {
+  const numbers = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (numbers.every((value) => Number.isInteger(value))) return formatNumber;
+  const large = numbers.some((value) => Math.abs(value) >= 1);
+  const decimals = Math.min(Math.max(...numbers.map(shownDecimals)), large ? 4 : 8);
+  const fixed = new Intl.NumberFormat("en", {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+  return (value) => (Number.isFinite(value) ? fixed.format(value) : formatNumber(value));
+}
+
+/** A table cell: numbers formatted when the column is numeric, ISO dates shortened, missing values left empty. */
+export function formatCell(value: unknown, kind: string, number: (value: number) => string = formatNumber): string {
   if (value === null || value === undefined) return "";
-  if (typeof value === "number") return kind === "integer" || kind === "number" ? formatNumber(value) : String(value);
+  if (typeof value === "number") return kind === "integer" || kind === "number" ? number(value) : String(value);
   if (typeof value === "boolean") return value ? "True" : "False";
   if (kind === "date" && typeof value === "string") return formatDate(value);
   return String(value);
 }
 
-/** A Python string literal for a column name, so inserted code works with quotes and backslashes in names. */
+const PYTHON_ESCAPES: Record<string, string> = {"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r", "\t": "\\t"};
+
+/** A Python string literal for a column name, so inserted code works with quotes, backslashes and control characters. */
 export function pythonString(text: string): string {
-  return `"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`;
+  const escaped = text.replace(
+    /[\\"\p{Cc}]/gu,
+    (char) => PYTHON_ESCAPES[char] ?? `\\x${char.charCodeAt(0).toString(16).padStart(2, "0")}`,
+  );
+  return `"${escaped}"`;
 }

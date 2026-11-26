@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {delimiterName, formatBytes, formatCell, formatDate, formatNumber, plural, pythonString} from "../src/format";
+import {columnNumberFormat, delimiterName, formatBytes, formatCell, formatDate, formatNumber, plural, pythonString} from "../src/format";
 import {cafeSalesCsv, weatherCsv} from "../src/samples";
 
 describe("format", () => {
@@ -30,6 +30,18 @@ describe("format", () => {
   it("quotes column names as Python strings", () => {
     expect(pythonString('say "hi"\\')).toBe('"say \\"hi\\"\\\\"');
     expect(pythonString("a\nb")).toBe('"a\\nb"');
+    expect(pythonString("a\r\tb\u0001")).toBe('"a\\r\\tb\\x01"');
+  });
+
+  it("gives every value of a result column the same decimals", () => {
+    const money = columnNumberFormat([2476.9, 4400, null, 12.35]);
+    expect([2476.9, 4400, 12.35].map(money)).toEqual(["2,476.90", "4,400.00", "12.35"]);
+    expect(formatCell(4400, "number", money)).toBe("4,400.00");
+    const counts = columnNumberFormat([1, 20, 300]);
+    expect(counts(1234)).toBe("1,234");
+    const small = columnNumberFormat([0.5, 0.0125]);
+    expect([0.5, 0.0125].map(small)).toEqual(["0.5000", "0.0125"]);
+    expect(columnNumberFormat([1.23456789, 2])(2)).toBe("2.000");
   });
 });
 
