@@ -9,6 +9,7 @@ import csv
 import io
 import json
 import math
+import re
 import traceback
 
 import numpy as np
@@ -18,10 +19,17 @@ PREVIEW_ROWS = 200
 HISTOGRAM_BINS = 24
 TOP_VALUES = 6
 OUTPUT_LIMIT = 20_000
+OUTPUT_CUT = "… earlier output cut\n"
 ENCODINGS = ("utf-8-sig", "cp1252", "latin-1")
 DELIMITERS = ",;\t|"
+# A text column becomes dates or clock times when at least this share of its values look like them.
+DETECT_SHARE = 0.95
+DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$"
+TIME_PATTERN = r"^(\d{1,2}):(\d{2})(?::(\d{2}))?$"
+# order_id, id, customer-id, OrderID: whole numbers that name a row rather than measure something.
+ID_NAME = re.compile(r"(^|[_\s-])id$|[a-z](Id|ID)$", re.IGNORECASE)
 
-_state = {"name": None, "last": None}
+_state = {"last": None}
 _namespace = {}
 
 
@@ -45,26 +53,66 @@ def _delimiter(text):
         return best if counts[best] else ","
 
 
+def _header(text, delimiter):
+    """The header line as written, so blank and repeated names are seen before pandas renames them."""
+    for row in csv.reader(io.StringIO(text[:65536]), delimiter=delimiter):
+        if row:
+            return row
+    return []
+
+
+def _column_names(written, count):
+    """Trimmed names; a blank one becomes column_N and a repeated one name_2, name_3…"""
+    if len(written) != count:
+        written = [""] * count
+    names, seen = [], set()
+    for i, raw in enumerate(written):
+        base = raw.strip() or f"column_{i + 1}"
+        name, n = base, 1
+        while name in seen:
+            n += 1
+            name = f"{base}_{n}"
+        seen.add(name)
+        names.append(name)
+    return names
+
+
 def _is_text(series):
     return pd.api.types.is_string_dtype(series) or pd.api.types.is_object_dtype(series)
 
 
 def _parse_dates(df):
-    """Turns text columns that hold ISO dates (2025-03-01, 2025-03-01 08:30) into datetimes."""
+    """Turns text columns that hold ISO dates (2025-03-01, 2025-03-01 08:30) into datetimes.
+
+    A few values that are not dates (at most 5%, such as "unknown") become missing.
+    """
     for column in df.columns:
         series = df[column]
         if not _is_text(series):
             continue
         values = series.dropna().astype(str)
-        if values.empty:
-            continue
-        if values.str.match(r"^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$").mean() < 0.95:
+        if values.empty or values.str.match(DATE_PATTERN).mean() < DETECT_SHARE:
             continue
         try:
-            df[column] = pd.to_datetime(series, format="ISO8601")
+            df[column] = pd.to_datetime(series, format="ISO8601", errors="coerce")
         except (ValueError, TypeError):
             pass
     return df
+
+
+def _time_seconds(values):
+    """Seconds since midnight for values like 8:30 or 17:45:10; None when too few values are clock times."""
+    parts = values.astype(str).str.extract(TIME_PATTERN).astype(float)
+    valid = (parts[0] < 24) & (parts[1] < 60) & ~(parts[2] >= 60)
+    if values.empty or valid.mean() < DETECT_SHARE:
+        return None
+    return (parts[0] * 3600 + parts[1] * 60 + parts[2].fillna(0))[valid]
+
+
+def _clock(seconds, with_seconds):
+    seconds = int(seconds)
+    clock = f"{seconds // 3600:02d}:{seconds // 60 % 60:02d}"
+    return f"{clock}:{seconds % 60:02d}" if with_seconds else clock
 
 
 def _number(value):
@@ -105,7 +153,10 @@ def _describe_column(name, series):
         "missing": int(series.isna().sum()),
         "unique": int(present.nunique()),
     }
-    if kind in ("integer", "number"):
+    if kind == "integer" and ID_NAME.search(str(name)) and not present.empty and present.is_unique:
+        column["identifier"] = True
+        column["range"] = {"min": str(int(present.min())), "max": str(int(present.max()))}
+    elif kind in ("integer", "number"):
         finite = present[np.isfinite(present.astype(float))]
         if not finite.empty:
             column["stats"] = {
@@ -122,9 +173,21 @@ def _describe_column(name, series):
             column["range"] = {"min": present.min().isoformat(), "max": present.max().isoformat()}
             column["histogram"] = _histogram(present.astype("int64") / 1e9)
     else:
-        counts = present.astype(str).value_counts().head(TOP_VALUES)
-        column["top"] = [{"value": str(v), "count": int(c)} for v, c in counts.items()]
+        seconds = _time_seconds(present) if kind == "text" and not present.empty else None
+        if seconds is not None:
+            column["kind"] = "time"
+            with_seconds = bool((seconds % 60).any())
+            column["range"] = {"min": _clock(seconds.min(), with_seconds), "max": _clock(seconds.max(), with_seconds)}
+            column["histogram"] = _histogram(seconds)
+        else:
+            counts = present.astype(str).value_counts().head(TOP_VALUES)
+            column["top"] = [{"value": str(v), "count": int(c)} for v, c in counts.items()]
     return column
+
+
+def _label(value):
+    """An index or column label as text; the levels of a MultiIndex (tuples, or lists after JSON) joined by /."""
+    return " / ".join(map(str, value)) if isinstance(value, (tuple, list)) else str(value)
 
 
 def _table(frame):
@@ -132,14 +195,13 @@ def _table(frame):
     shown = frame.head(PREVIEW_ROWS)
     split = json.loads(shown.to_json(orient="split", date_format="iso", double_precision=15, default_handler=str))
     plain_index = isinstance(frame.index, pd.RangeIndex) and frame.index.start == 0 and frame.index.step == 1
-    names = [n for n in frame.index.names]
     return {
         "kind": "table",
-        "columns": [str(c) if not isinstance(c, tuple) else " / ".join(map(str, c)) for c in frame.columns],
+        "columns": [_label(c) for c in frame.columns],
         "kinds": [_kind(frame[c]) if isinstance(frame[c], pd.Series) else "text" for c in frame.columns],
         "rows": split["data"],
-        "index": None if plain_index else [str(i) if not isinstance(i, tuple) else " / ".join(map(str, i)) for i in split["index"]],
-        "indexName": None if plain_index else " / ".join("" if n is None else str(n) for n in names),
+        "index": None if plain_index else [_label(i) for i in split["index"]],
+        "indexName": None if plain_index else " / ".join("" if n is None else str(n) for n in frame.index.names),
         "totalRows": int(len(frame)),
         "totalColumns": int(frame.shape[1]),
     }
@@ -152,8 +214,11 @@ def _result(value):
     if isinstance(value, pd.DataFrame):
         return _table(value)
     if isinstance(value, pd.Index):
-        return _table(value.to_frame(index=False))
-    if isinstance(value, np.ndarray) and value.ndim <= 2:
+        return _table(value.to_frame(index=False, name=value.name if value.name is not None else "value"))
+    # unique() gives a NumPy array, or a pandas array for text columns.
+    if isinstance(value, pd.api.extensions.ExtensionArray) or (isinstance(value, np.ndarray) and value.ndim == 1):
+        return _table(pd.DataFrame({"value": value}))
+    if isinstance(value, np.ndarray) and value.ndim == 2:
         return _table(pd.DataFrame(value))
     text = repr(value)
     if len(text) > OUTPUT_LIMIT:
@@ -161,16 +226,23 @@ def _result(value):
     return {"kind": "text", "text": text}
 
 
+def _tail(text):
+    """The end of long output, which is where the latest lines are, marked when the start was cut."""
+    return text if len(text) <= OUTPUT_LIMIT else OUTPUT_CUT + text[-OUTPUT_LIMIT:]
+
+
 def load(data, name):
     """Reads CSV bytes into `df` and returns the overview of the file."""
     text, encoding = _decode(bytes(data))
     delimiter = _delimiter(text)
-    df = pd.read_csv(io.StringIO(text), sep=delimiter, low_memory=False)
-    df.columns = [str(c).strip() or f"column_{i + 1}" for i, c in enumerate(df.columns)]
+    try:
+        df = pd.read_csv(io.StringIO(text), sep=delimiter, low_memory=False)
+    except pd.errors.EmptyDataError:
+        raise ValueError("There are no columns in this file. The first line should name them.") from None
+    df.columns = _column_names(_header(text, delimiter), len(df.columns))
     df = _parse_dates(df)
     _namespace.clear()
     _namespace.update({"df": df, "pd": pd, "np": np})
-    _state["name"] = name
     _state["last"] = df
     return json.dumps({
         "name": name,
@@ -202,12 +274,12 @@ def run(code):
             "message": f"{type(error).__name__}: {error}",
             "line": getattr(error, "lineno", None) if isinstance(error, SyntaxError) else _error_line(error),
             "traceback": "".join(kept)[-OUTPUT_LIMIT:],
-            "stdout": output.getvalue()[-OUTPUT_LIMIT:],
+            "stdout": _tail(output.getvalue()),
         })
     result = _result(value) if value is not None else {"kind": "none"}
     if isinstance(value, (pd.DataFrame, pd.Series)):
         _state["last"] = value
-    result["stdout"] = output.getvalue()[-OUTPUT_LIMIT:]
+    result["stdout"] = _tail(output.getvalue())
     return json.dumps(result, allow_nan=False, default=str)
 
 
@@ -230,11 +302,3 @@ def export_csv():
         return ""
     keep_index = not (isinstance(last.index, pd.RangeIndex) and last.index.start == 0 and last.index.step == 1)
     return last.to_csv(index=keep_index)
-
-
-def columns():
-    """Names and kinds of the columns of `df` as it is now (the person's code may replace it)."""
-    df = _namespace.get("df")
-    if not isinstance(df, pd.DataFrame):
-        return json.dumps([])
-    return json.dumps([{"name": str(c), "kind": _kind(df[c])} for c in df.columns])

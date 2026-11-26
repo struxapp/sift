@@ -6,7 +6,6 @@ export type ToWorker =
   | {type: "init"; indexURL: string}
   | {type: "load"; id: number; bytes: Uint8Array; name: string}
   | {type: "run"; id: number; code: string}
-  | {type: "columns"; id: number}
   | {type: "export"; id: number};
 
 export type FromWorker =
@@ -15,7 +14,7 @@ export type FromWorker =
   | {type: "result"; id: number; json: string; seconds: number}
   | {type: "failed"; id: number; message: string};
 
-export type Kind = "integer" | "number" | "date" | "boolean" | "text";
+export type Kind = "integer" | "number" | "date" | "time" | "boolean" | "text";
 
 export interface Histogram {
   counts: number[];
@@ -28,6 +27,8 @@ export interface ColumnSummary {
   dtype: string;
   missing: number;
   unique: number;
+  /** A whole-number column named like an id (order_id) whose values are all different: shown as a range, no statistics. */
+  identifier?: boolean;
   stats?: {min: number | null; max: number | null; mean: number | null; median: number | null; std: number | null; sum: number | null};
   range?: {min: string; max: string};
   top?: {value: string; count: number}[];

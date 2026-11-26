@@ -11,12 +11,13 @@ interface Column {
   name: string;
   kind: Kind;
   unique?: number;
+  identifier?: boolean;
 }
 
 const col = (name: string) => `df[${pythonString(name)}]`;
 
 export function snippetsFor(columns: readonly Column[], rows: number): Snippet[] {
-  const numbers = columns.filter((c) => c.kind === "number" || c.kind === "integer");
+  const numbers = columns.filter((c) => (c.kind === "number" || c.kind === "integer") && !c.identifier);
   // A good column to group by repeats its values: few distinct values compared with the rows.
   const groups = columns
     .filter((c) => c.kind === "text" || c.kind === "boolean")

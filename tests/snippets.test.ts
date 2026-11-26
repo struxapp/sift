@@ -5,10 +5,11 @@ describe("snippetsFor", () => {
   it("writes queries for the café columns", () => {
     const snippets = snippetsFor(
       [
-        {name: "order_id", kind: "integer", unique: 6000},
+        {name: "order_id", kind: "integer", unique: 6000, identifier: true},
         {name: "date", kind: "date", unique: 365},
         {name: "shop", kind: "text", unique: 3},
         {name: "product", kind: "text", unique: 10},
+        {name: "quantity", kind: "integer", unique: 3},
         {name: "total", kind: "number", unique: 40},
       ],
       6000,

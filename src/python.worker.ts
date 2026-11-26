@@ -50,13 +50,13 @@ self.addEventListener("message", async (event: MessageEvent<ToWorker>) => {
     let json: string;
     if (message.type === "load") json = call(pyodide, "load", message.bytes, message.name);
     else if (message.type === "run") json = call(pyodide, "run", message.code);
-    else if (message.type === "columns") json = call(pyodide, "columns");
     else json = JSON.stringify({csv: call(pyodide, "export_csv")});
     post({type: "result", id: message.id, json, seconds: (performance.now() - started) / 1000});
   } catch (error) {
     const text = error instanceof Error ? error.message : String(error);
-    // A Python error crossing into JavaScript carries the whole traceback; its last line says what went wrong.
-    const lastLine = text.trim().split("\n").pop() ?? text;
+    // A Python error crossing into JavaScript carries the whole traceback; its last line says what went wrong,
+    // after the exception's class name (ValueError: …), which means little to most people.
+    const lastLine = (text.trim().split("\n").pop() ?? text).replace(/^[\w.]*(Error|Exception): /, "");
     post({type: "failed", id: message.id, message: lastLine});
   }
 });
