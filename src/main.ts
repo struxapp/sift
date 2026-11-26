@@ -100,6 +100,8 @@ async function openData(bytes: Uint8Array, name: string, source: Source = "file"
     overview = await python.load(bytes, name);
     showWorkspace(overview);
   } catch (error) {
+    // Stop ended the worker while the file was still opening: nothing went wrong with the file.
+    if (error instanceof StoppedError) return;
     if (error instanceof PythonUnavailableError) showStartError(unavailable(error.message), reloadButton());
     else fail(`Sift could not read ${name}: ${(error as Error).message}`);
   } finally {
@@ -217,7 +219,7 @@ async function stop(): Promise<void> {
   try {
     if (await python.restart()) $("result-meta").textContent = "Stopped. Your file is open again; variables you made are gone.";
   } catch (error) {
-    if (!(error instanceof PythonUnavailableError)) {
+    if (!(error instanceof PythonUnavailableError || error instanceof StoppedError)) {
       showResult({kind: "error", message: (error as Error).message, line: null, traceback: "", stdout: ""}, null);
     }
   }

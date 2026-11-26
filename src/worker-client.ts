@@ -8,7 +8,7 @@ export interface WorkerLike {
   postMessage(message: ToWorker, transfer: Transferable[]): void;
   terminate(): void;
   addEventListener(type: "message", listener: (event: MessageEvent<FromWorker>) => void): void;
-  addEventListener(type: "error", listener: () => void): void;
+  addEventListener(type: "error" | "messageerror", listener: () => void): void;
 }
 
 /** A request ended because the person pressed Stop. */
@@ -51,6 +51,10 @@ export class PythonClient {
     worker.addEventListener("error", () => {
       if (worker === this.#worker) this.#fail("Python stopped unexpectedly.");
     });
+    // A reply that cannot be read leaves its request waiting for ever, so treat it like a crash.
+    worker.addEventListener("messageerror", () => {
+      if (worker === this.#worker) this.#fail("Python sent a reply the page could not read.");
+    });
     this.#setStage("runtime");
     worker.postMessage({type: "init", indexURL: this.#options.indexURL}, []);
   }
@@ -73,14 +77,19 @@ export class PythonClient {
 
   /**
    * Ends the worker (the only way to interrupt Python without SharedArrayBuffer), starts a new one and opens the last
-   * file again. Resolves to whether a file was opened again.
+   * file again. Resolves to whether a file was opened again; false too when another Stop took over meanwhile.
    */
   async restart(): Promise<boolean> {
     this.#worker?.terminate();
     this.#rejectAll(new StoppedError("Stopped"));
     this.start();
     if (!this.file) return false;
-    await this.#request({type: "load", bytes: this.file.bytes.slice(), name: this.file.name});
+    try {
+      await this.#request({type: "load", bytes: this.file.bytes.slice(), name: this.file.name});
+    } catch (error) {
+      if (error instanceof StoppedError) return false;
+      throw error;
+    }
     return true;
   }
 
@@ -107,6 +116,7 @@ export class PythonClient {
   }
 
   #fail(message: string): void {
+    if (this.stage === "failed") return; // a fatal start is often followed by an error event: report it once
     this.#setStage("failed");
     this.#rejectAll(new PythonUnavailableError(message));
     this.#options.onFailure(message);
