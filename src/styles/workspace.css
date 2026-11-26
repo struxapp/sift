@@ -368,9 +368,11 @@
   text-align: right;
 }
 
+/* Row labels stay as narrow as their text; spare width goes to the value columns. */
 .table .index-col {
   position: sticky;
   left: 0;
+  width: 1%;
   background: var(--surface-2);
   font-weight: 600;
 }
