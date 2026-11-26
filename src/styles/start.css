@@ -1,0 +1,289 @@
+/* ---------------------------------------------------------------- Start */
+
+main {
+  flex: 1;
+  width: 100%;
+}
+
+.start {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(28px, 7vw, 72px) 16px 40px;
+}
+
+.start h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.resume {
+  margin: -12px 0 24px;
+}
+
+.resume .btn-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70vw;
+}
+
+.lede {
+  margin: 0 0 28px;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 32px 20px 24px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.drop:focus-within {
+  border-color: var(--accent);
+}
+
+.drop-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.drop-icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.drop-title {
+  margin: 8px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.link-like {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+#file:focus-visible + .drop-icon + .drop-title .link-like {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.drop-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.drop-actions {
+  margin-top: 10px;
+}
+
+/* While a file opens, only the message shows: dimmed text behind it read as clutter. */
+.drop.busy > :not(.drop-busy) {
+  visibility: hidden;
+}
+
+.drop-busy {
+  position: absolute;
+  inset: auto 16px 50%;
+  transform: translateY(50%);
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+}
+
+.paste {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  text-align: left;
+}
+
+.field-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.paste textarea {
+  padding: 10px 12px;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.paste .btn {
+  justify-self: end;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.paste textarea[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+#start-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#start-error > .error-action {
+  margin-top: 0;
+}
+
+/* Dropping a file needs a mouse; on touch screens the words only confuse. */
+@media (hover: none), (pointer: coarse) {
+  .drop-words {
+    display: none;
+  }
+}
+
+.samples {
+  margin-top: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sample-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.sample {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sample:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.sample .icon {
+  color: var(--accent);
+}
+
+.sample-words {
+  display: grid;
+}
+
+.sample-name {
+  font-weight: 600;
+}
+
+.sample-description {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.boot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.boot li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boot-mark {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+}
+
+.boot li[data-state='active'] {
+  color: var(--text);
+}
+
+.boot li[data-state='active'] .boot-mark {
+  border-color: var(--amber);
+  border-right-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+
+.boot li[data-state='done'] .boot-mark {
+  border-color: #2e9d5b;
+  background: #2e9d5b radial-gradient(circle, #fff 0 2px, transparent 2.5px);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.drop-overlay p {
+  padding: 18px 24px;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 18px;
+  font-weight: 600;
+}

@@ -1,0 +1,108 @@
+/* Geist and Geist Mono, bundled from @fontsource (SIL OFL 1.1), Latin subsets only. */
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Geist Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+:root {
+  --font-ui: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --surface-2: #f1efea;
+  --border: #e4e1da;
+  --border-strong: #cdc8bd;
+  --text: #1b1d22;
+  --muted: #5c606b;
+  --accent: #1f5fbf;
+  --accent-hover: #184c99;
+  --on-accent: #ffffff;
+  --accent-soft: #e6eefb;
+  --amber: #955a00;
+  --amber-soft: #fbf0dc;
+  --bar: #9db8e6;
+  --focus: #1f5fbf;
+  --error: #b42318;
+  --error-bg: #fdecea;
+  --row-alt: #faf9f6;
+  --shadow: 0 1px 2px rgb(27 29 34 / 0.05), 0 12px 32px -20px rgb(27 29 34 / 0.28);
+
+  --k-integer: #1f5fbf;
+  --k-number: #1f5fbf;
+  --k-date: #7c3aed;
+  --k-text: #0f766e;
+  --k-boolean: #955a00;
+
+  --radius: 12px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #111315;
+    --surface: #181a1e;
+    --surface-2: #202329;
+    --border: #2a2e35;
+    --border-strong: #3a3f48;
+    --text: #eceae5;
+    --muted: #a1a5ae;
+    --accent: #7eaaf2;
+    --accent-hover: #a3c2f6;
+    --on-accent: #0d1626;
+    --accent-soft: #1c2a40;
+    --amber: #f2b33d;
+    --amber-soft: #33281a;
+    --bar: #4a6da8;
+    --focus: #7eaaf2;
+    --error: #ff8a80;
+    --error-bg: #3a1d1b;
+    --row-alt: #1c1f23;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -20px rgb(0 0 0 / 0.6);
+    --k-integer: #7eaaf2;
+    --k-number: #7eaaf2;
+    --k-date: #b9a0f7;
+    --k-text: #5fd4c4;
+    --k-boolean: #f2b33d;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #111315;
+  --surface: #181a1e;
+  --surface-2: #202329;
+  --border: #2a2e35;
+  --border-strong: #3a3f48;
+  --text: #eceae5;
+  --muted: #a1a5ae;
+  --accent: #7eaaf2;
+  --accent-hover: #a3c2f6;
+  --on-accent: #0d1626;
+  --accent-soft: #1c2a40;
+  --amber: #f2b33d;
+  --amber-soft: #33281a;
+  --bar: #4a6da8;
+  --focus: #7eaaf2;
+  --error: #ff8a80;
+  --error-bg: #3a1d1b;
+  --row-alt: #1c1f23;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -20px rgb(0 0 0 / 0.6);
+  --k-integer: #7eaaf2;
+  --k-number: #7eaaf2;
+  --k-date: #b9a0f7;
+  --k-text: #5fd4c4;
+  --k-boolean: #f2b33d;
+  color-scheme: dark;
+}
