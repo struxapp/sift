@@ -13,9 +13,8 @@ export const icons: Record<string, string> = {
   moon: svg('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'),
   table: svg('<path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/>'),
   insert: svg('<path d="M5 12h14"/><path d="M12 5v14"/>'),
+  back: svg('<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'),
 };
-
-export const logo = `<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#1b1d22"/><path d="M7 9.5h18M10 15h12M13 20.5h6" stroke="#f5f3ee" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="25.2" r="1.9" fill="#f2b33d"/></svg>`;
 
 export function fillIcons(root: ParentNode = document): void {
   for (const element of root.querySelectorAll<HTMLElement>("[data-icon]")) {

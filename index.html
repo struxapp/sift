@@ -11,15 +11,15 @@
     <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#111315" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to the content</a>
     <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true"></span>
+      <a class="brand" id="home" href="./" aria-label="Sift: back to the start" title="Back to the start">
+        <img class="brand-mark" src="./icon.svg" alt="" width="28" height="28" />
         <span class="brand-name">Sift</span>
-      </div>
+      </a>
       <div class="top-actions">
         <p class="engine" id="engine" role="status" aria-live="polite">
           <span class="engine-dot" aria-hidden="true"></span><span id="engine-text">Starting Python…</span>
@@ -34,17 +34,20 @@
     <main id="main" tabindex="-1">
       <section class="start" id="start" aria-labelledby="start-title">
         <div class="start-copy">
-          <h1 id="start-title">Explore a CSV with pandas, right here in your browser.</h1>
+          <h1 id="start-title" tabindex="-1">Explore a CSV with pandas, right here in your browser.</h1>
           <p class="lede">
             Sift describes every column, then answers your questions in real pandas code. Python runs on this page, so
             your file is never uploaded anywhere.
           </p>
+          <button type="button" class="btn resume" id="resume" hidden>
+            <span data-icon="back"></span><span class="btn-label">Back to <span id="resume-name"></span></span>
+          </button>
         </div>
 
         <div class="drop" id="drop">
           <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" class="sr-only" />
           <span class="drop-icon" data-icon="upload" aria-hidden="true"></span>
-          <p class="drop-title"><label for="file" class="link-like">Choose a CSV file</label> or drop it here</p>
+          <p class="drop-title"><label for="file" class="link-like">Choose a CSV file</label><span class="drop-words"> or drop it here</span></p>
           <p class="drop-hint">Comma, semicolon, tab or pipe separated · UTF-8 or Windows-1252 · up to 100 MB</p>
           <div class="drop-actions">
             <button type="button" class="btn" id="paste-toggle" aria-expanded="false" aria-controls="paste-panel">
@@ -53,10 +56,19 @@
           </div>
           <div class="paste" id="paste-panel" hidden>
             <label for="paste" class="field-label">Paste rows with a header line, for example copied from a spreadsheet</label>
-            <textarea id="paste" class="mono" rows="7" spellcheck="false" placeholder="name,amount&#10;Rent,950&#10;Groceries,312.40"></textarea>
+            <textarea
+              id="paste"
+              class="mono"
+              rows="7"
+              spellcheck="false"
+              placeholder="name,amount&#10;Rent,950&#10;Groceries,312.40"
+              aria-describedby="paste-error"
+            ></textarea>
+            <p class="field-error" id="paste-error" role="alert" hidden></p>
             <button type="button" class="btn btn-primary" id="paste-open">Open pasted data</button>
           </div>
         </div>
+        <div class="error-box" id="start-error" role="alert" hidden></div>
 
         <div class="samples">
           <h2 class="eyebrow">Or try an example</h2>
@@ -68,13 +80,12 @@
           <li data-stage="packages"><span class="boot-mark" aria-hidden="true"></span>pandas and NumPy</li>
           <li data-stage="ready"><span class="boot-mark" aria-hidden="true"></span>Ready</li>
         </ol>
-        <p class="error-box" id="start-error" role="alert" hidden></p>
       </section>
 
       <section class="workspace" id="workspace" hidden aria-labelledby="file-name">
         <div class="filebar">
           <div>
-            <h1 class="file-name" id="file-name"></h1>
+            <h1 class="file-name" id="file-name" tabindex="-1"></h1>
             <p class="file-facts" id="file-facts"></p>
           </div>
         </div>
@@ -93,7 +104,7 @@
             <section class="card editor-card" aria-labelledby="query-label">
               <div class="card-head">
                 <label class="pane-title" id="query-label" for="query">Ask in pandas</label>
-                <span class="hint" id="query-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> runs · <code>df</code> is your file</span>
+                <span class="hint" id="query-hint"><span class="key-hint" id="key-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> runs · </span><code>df</code> is your file</span>
               </div>
               <textarea
                 id="query"
@@ -138,7 +149,10 @@
     </main>
 
     <footer class="footer">
-      <p>Your data stays on this device. Sift is open source (MIT) and runs Python with Pyodide, pandas and NumPy.</p>
+      <p>
+        Your data stays on this device. Sift is open source (MIT) and runs Python with Pyodide, pandas and NumPy.
+        <a href="https://github.com/iSquare-Lab/sift">Source on GitHub</a>
+      </p>
     </footer>
 
     <div class="drop-overlay" id="drop-overlay" hidden aria-hidden="true"><p>Drop the CSV to open it</p></div>
