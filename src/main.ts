@@ -31,26 +31,26 @@ const pending = new Map<number, Pending>();
 
 function startWorker(): void {
   worker = new Worker(new URL("./python.worker.ts", import.meta.url), {type: "module"});
-  worker.onmessage = (event: MessageEvent<FromWorker>) => {
+  worker.addEventListener("message", (event: MessageEvent<FromWorker>) => {
     const message = event.data;
     if (message.type === "stage") return setStage(message.stage);
     if (message.type === "fatal") {
       setStage("failed");
       showStartError(`Python could not start (${message.message}). Check your connection and reload the page.`);
-      for (const request of pending.values()) request.reject(new Error("Python could not start."));
+      for (const waiting of pending.values()) waiting.reject(new Error("Python could not start."));
       pending.clear();
       return;
     }
-    const request = pending.get(message.id);
-    if (!request) return;
+    const waiting = pending.get(message.id);
+    if (!waiting) return;
     pending.delete(message.id);
-    if (message.type === "result") request.resolve({json: message.json, seconds: message.seconds});
-    else request.reject(new Error(message.message));
-  };
-  worker.onerror = () => {
+    if (message.type === "result") waiting.resolve({json: message.json, seconds: message.seconds});
+    else waiting.reject(new Error(message.message));
+  });
+  worker.addEventListener("error", () => {
     setStage("failed");
     showStartError("Python stopped unexpectedly. Reload the page to start it again.");
-  };
+  });
   setStage("runtime");
   post({type: "init", indexURL: new URL("pyodide/", document.baseURI).href});
 }
@@ -300,7 +300,7 @@ class StoppedError extends Error {}
 /** Ends the worker (the only way to interrupt Python without SharedArrayBuffer), starts a new one and opens the file again. */
 async function stop(): Promise<void> {
   worker.terminate();
-  for (const request of pending.values()) request.reject(new StoppedError("Stopped"));
+  for (const waiting of pending.values()) waiting.reject(new StoppedError("Stopped"));
   pending.clear();
   startWorker();
   $("result-meta").textContent = "Stopped. Python is starting again and will reopen your file; variables you made are gone.";
@@ -419,6 +419,8 @@ async function downloadCsv(): Promise<void> {
 
 // ---------------------------------------------------------------- Page wiring
 
+const hasFiles = (event: DragEvent) => Array.from(event.dataTransfer?.types ?? []).includes("Files");
+
 function wire(): void {
   document.querySelector(".brand-mark")!.innerHTML = logo;
   fillIcons();
@@ -464,7 +466,6 @@ function wire(): void {
 
   const overlay = $("drop-overlay");
   let depth = 0;
-  const hasFiles = (event: DragEvent) => Array.from(event.dataTransfer?.types ?? []).includes("Files");
   window.addEventListener("dragenter", (event) => {
     if (!hasFiles(event)) return;
     depth++;

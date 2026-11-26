@@ -1,6 +1,6 @@
-export type Theme = 'light' | 'dark';
+export type Theme = "light" | "dark";
 
-const KEY = 'sift:theme';
+const KEY = "sift:theme";
 
 function read(): string | null {
   try {
@@ -20,17 +20,17 @@ function write(value: string): void {
 
 export function currentTheme(): Theme {
   const forced = document.documentElement.dataset.theme;
-  if (forced === 'light' || forced === 'dark') return forced;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (forced === "light" || forced === "dark") return forced;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function initTheme(onChange: (theme: Theme) => void): () => void {
   const stored = read();
-  if (stored === 'light' || stored === 'dark') document.documentElement.dataset.theme = stored;
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => onChange(currentTheme()));
+  if (stored === "light" || stored === "dark") document.documentElement.dataset.theme = stored;
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => onChange(currentTheme()));
   onChange(currentTheme());
   return () => {
-    const next: Theme = currentTheme() === 'dark' ? 'light' : 'dark';
+    const next: Theme = currentTheme() === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     write(next);
     onChange(next);

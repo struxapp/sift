@@ -36,7 +36,7 @@ describe("load", () => {
     const kinds = Object.fromEntries(overview.columns.map((c: any) => [c.name, c.kind]));
     expect(kinds).toMatchObject({order_id: "integer", date: "date", shop: "text", total: "number", quantity: "integer"});
     const shop = overview.columns.find((c: any) => c.name === "shop");
-    expect(shop.top.map((t: any) => t.value).sort()).toEqual(["Harbour", "Old Town", "Station"]);
+    expect(shop.top.map((t: any) => t.value).toSorted()).toEqual(["Harbour", "Old Town", "Station"]);
     const total = overview.columns.find((c: any) => c.name === "total");
     expect(total.histogram.counts.reduce((a: number, b: number) => a + b, 0)).toBe(overview.rows);
     expect(overview.preview.rows).toHaveLength(200);

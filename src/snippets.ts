@@ -21,8 +21,8 @@ export function snippetsFor(columns: readonly Column[], rows: number): Snippet[]
   const groups = columns
     .filter((c) => c.kind === "text" || c.kind === "boolean")
     .filter((c) => c.unique === undefined || (c.unique > 1 && c.unique <= Math.max(50, rows / 20)))
-    .sort((a, b) => (a.unique ?? 0) - (b.unique ?? 0));
-  const measure = [...numbers].reverse().find((c) => !/(^|_)(id|code|zip|year)$/i.test(c.name)) ?? numbers[0];
+    .toSorted((a, b) => (a.unique ?? 0) - (b.unique ?? 0));
+  const measure = numbers.toReversed().find((c) => !/(^|_)(id|code|zip|year)$/i.test(c.name)) ?? numbers[0];
   const group = groups[0];
   const date = columns.find((c) => c.kind === "date");
   const snippets: Snippet[] = [
