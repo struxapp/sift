@@ -1,9 +1,11 @@
 # Sift
 
+![Sift in the dark theme: the café example with its columns described and a monthly total by pandas](docs/screenshot-dark.png)
+
 Sift lets you explore a CSV file with pandas, right in your browser. Python runs on the page (Pyodide), so your file
 is never uploaded anywhere.
 
-Screenshots: [docs/screenshot-dark.png](docs/screenshot-dark.png)
+More: [light theme](docs/screenshot-light.png), [icon](docs/icon.png).
 
 - **Open a file** by choosing it, dropping it on the page or pasting rows (for example copied from a spreadsheet).
   Comma, semicolon, tab and pipe separators and UTF-8 or Windows-1252 text are detected for you; ISO dates become
