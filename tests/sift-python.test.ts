@@ -65,6 +65,12 @@ describe("load", () => {
     expect(column(named, "paid").identifier).toBeUndefined();
   });
 
+  it("keeps an id column with a gap an identifier, though pandas reads it as decimals", () => {
+    const gap = column(load("order_id,x\n1,a\n2,b\n,c\n4,d\n"), "order_id");
+    expect(gap).toMatchObject({kind: "number", identifier: true, missing: 1, range: {min: "1", max: "4"}});
+    expect(column(load("order_id\n1.5\n2\n"), "order_id").identifier).toBeUndefined();
+  });
+
   it("detects clock times and gives their range", () => {
     const overview = load("at,n\n08:05,1\n9:30,2\n17:45:10,3\n");
     const at = column(overview, "at");
@@ -96,6 +102,12 @@ describe("load", () => {
   it("names blank headers and makes repeated headers unique", () => {
     const overview = load("name,,name, name ,amount\na,1,b,c,2\n");
     expect(overview.columns.map((c) => c.name)).toEqual(["name", "column_2", "name_2", "name_3", "amount"]);
+  });
+
+  it("reads a header line longer than the delimiter sample", () => {
+    const long = "x".repeat(70_000);
+    const overview = load(`${long},b,b\n1,2,3\n`);
+    expect(overview.columns.map((c) => c.name)).toEqual([long, "b", "b_2"]);
   });
 
   it("describes an all-empty column as missing everywhere", () => {
@@ -156,6 +168,20 @@ describe("run", () => {
     expect(index.rows[0]).toEqual(["order_id"]);
     expect(runTable('df["quantity"].unique()').rows.map((row) => row[0]).toSorted()).toEqual([1, 2, 3]);
     expect(run("np.array(5)")).toMatchObject({kind: "text", text: "array(5)"});
+    const levels = runTable('df.groupby(["shop", "payment"]).size().index');
+    expect(levels.columns).toEqual(["shop", "payment"]);
+    expect(levels.rows[0]).toEqual(["Harbour", "Card"]);
+  });
+
+  it("shows NumPy scalars as plain Python values", () => {
+    expect(run("df.quantity.sum()")).toMatchObject({kind: "text", text: expect.stringMatching(/^\d+$/)});
+    expect(run("np.float64(4.5)")).toMatchObject({kind: "text", text: "4.5"});
+    expect(run("df.total.mean() > 0")).toMatchObject({kind: "text", text: "True"});
+  });
+
+  it("turns a value that cannot be shown into an error, not a crash", () => {
+    const result = run('class Odd:\n    def __repr__(self):\n        raise ValueError("no repr")\nOdd()');
+    expect(result).toMatchObject({kind: "error", message: "ValueError: no repr"});
   });
 
   it("explains errors with the line in the person's code", () => {

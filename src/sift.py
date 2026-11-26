@@ -55,10 +55,10 @@ def _delimiter(text):
 
 def _header(text, delimiter):
     """The header line as written, so blank and repeated names are seen before pandas renames them."""
-    for row in csv.reader(io.StringIO(text[:65536]), delimiter=delimiter):
-        if row:
-            return row
-    return []
+    try:
+        return next((row for row in csv.reader(io.StringIO(text), delimiter=delimiter) if row), [])
+    except csv.Error:  # a name longer than the csv module's field limit: keep the names pandas gave
+        return []
 
 
 def _column_names(written, count):
@@ -153,7 +153,9 @@ def _describe_column(name, series):
         "missing": int(series.isna().sum()),
         "unique": int(present.nunique()),
     }
-    if kind == "integer" and ID_NAME.search(str(name)) and not present.empty and present.is_unique:
+    # A gap turns a whole-number column into decimals in pandas, so whole values count, whatever the dtype.
+    whole = kind == "integer" or (kind == "number" and not present.empty and bool((present % 1 == 0).all()))
+    if whole and ID_NAME.search(str(name)) and not present.empty and present.is_unique:
         column["identifier"] = True
         column["range"] = {"min": str(int(present.min())), "max": str(int(present.max()))}
     elif kind in ("integer", "number"):
@@ -213,6 +215,8 @@ def _result(value):
         return _table(value.to_frame(name=name))
     if isinstance(value, pd.DataFrame):
         return _table(value)
+    if isinstance(value, pd.MultiIndex):
+        return _table(value.to_frame(index=False))
     if isinstance(value, pd.Index):
         return _table(value.to_frame(index=False, name=value.name if value.name is not None else "value"))
     # unique() gives a NumPy array, or a pandas array for text columns.
@@ -220,6 +224,8 @@ def _result(value):
         return _table(pd.DataFrame({"value": value}))
     if isinstance(value, np.ndarray) and value.ndim == 2:
         return _table(pd.DataFrame(value))
+    if isinstance(value, (np.number, np.bool_)):
+        value = value.item()  # 4, not np.int64(4) as NumPy 2 writes it
     text = repr(value)
     if len(text) > OUTPUT_LIMIT:
         text = text[:OUTPUT_LIMIT] + "\n…"
@@ -266,6 +272,10 @@ def run(code):
         with contextlib.redirect_stdout(output):
             exec(compile(tree, "<query>", "exec"), _namespace)
             value = eval(compile(last, "<query>", "eval"), _namespace) if last is not None else None
+            # Showing the value runs the person's code too (a __repr__), so its errors become an error card as well.
+            result = _result(value) if value is not None else {"kind": "none"}
+        result["stdout"] = _tail(output.getvalue())
+        text = json.dumps(result, allow_nan=False, default=str)
     except BaseException as error:  # noqa: BLE001 - the person's code may raise anything, even SystemExit
         lines = traceback.format_exception(type(error), error, error.__traceback__)
         kept = [line for line in lines if "<query>" in line or not line.startswith("  File")]
@@ -276,11 +286,9 @@ def run(code):
             "traceback": "".join(kept)[-OUTPUT_LIMIT:],
             "stdout": _tail(output.getvalue()),
         })
-    result = _result(value) if value is not None else {"kind": "none"}
     if isinstance(value, (pd.DataFrame, pd.Series)):
         _state["last"] = value
-    result["stdout"] = _tail(output.getvalue())
-    return json.dumps(result, allow_nan=False, default=str)
+    return text
 
 
 def _error_line(error):
