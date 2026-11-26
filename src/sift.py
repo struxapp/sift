@@ -27,7 +27,7 @@ DETECT_SHARE = 0.95
 DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$"
 TIME_PATTERN = r"^(\d{1,2}):(\d{2})(?::(\d{2}))?$"
 # order_id, id, customer-id, OrderID: whole numbers that name a row rather than measure something.
-ID_NAME = re.compile(r"(^|[_\s-])id$|[a-z](Id|ID)$", re.IGNORECASE)
+ID_NAME = re.compile(r"(?i:(^|[_\s-])id)$|[a-z](Id|ID)$")
 
 _state = {"last": None}
 _namespace = {}

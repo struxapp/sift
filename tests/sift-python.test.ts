@@ -60,6 +60,9 @@ describe("load", () => {
     expect(orderId.range).toEqual({min: "10000", max: String(10_000 + overview.rows - 1)});
     // A quantity repeats its values, so it keeps its statistics.
     expect(column(overview, "quantity").stats?.mean).toBeGreaterThan(1);
+    const named = load("OrderID,paid\n7,10\n8,20\n9,30\n");
+    expect(column(named, "OrderID").identifier).toBe(true);
+    expect(column(named, "paid").identifier).toBeUndefined();
   });
 
   it("detects clock times and gives their range", () => {
